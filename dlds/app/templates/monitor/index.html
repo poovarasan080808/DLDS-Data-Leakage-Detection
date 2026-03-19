@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Data Monitor{% endblock %}
+{% block breadcrumb %}Data Monitor{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start">
+  <div>
+    <h1><i class="bi bi-activity me-2 text-danger"></i>Data Activity Monitor</h1>
+    <p>Real-time visibility into all data movements across the organisation.</p>
+  </div>
+  <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded-3 border">
+    <span class="live-dot"></span><span class="small fw-semibold text-success">Live</span>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="GET" class="row g-2 align-items-end">
+      {% if current_user.is_admin() %}
+      <div class="col-md-3">
+        <label class="form-label small mb-1">User</label>
+        <input type="text" name="user" class="form-control form-control-sm" value="{{ user_filter }}" placeholder="Filter by username">
+      </div>
+      {% endif %}
+      <div class="col-md-2">
+        <label class="form-label small mb-1">Event Type</label>
+        <select name="type" class="form-select form-select-sm">
+          <option value="">All types</option>
+          {% for t in ['upload','download','email','usb','print','clipboard','api'] %}
+          <option value="{{ t }}" {% if type_filter==t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small mb-1">Date</label>
+        <input type="date" name="date" class="form-control form-control-sm" value="{{ date_filter }}">
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-danger">Filter</button>
+        <a href="{{ url_for('monitor.index') }}" class="btn btn-sm btn-outline-secondary ms-1">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <!-- Event Type Breakdown -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header small fw-semibold">Event Types (30 days)</div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="typeChart" height="180"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Events Feed -->
+  <div class="col-md-8">
+    <div class="card h-100">
+      <div class="card-header small fw-semibold d-flex justify-content-between">
+        <span><span class="live-dot me-1"></span>Live Event Feed</span>
+        <span class="text-muted">Auto-refreshes every 10s</span>
+      </div>
+      <div class="card-body p-0" id="liveEventsBody">
+        <table class="table table-sm mb-0 small">
+          <thead><tr><th>Type</th><th>Description</th><th>User</th><th>Time</th></tr></thead>
+          <tbody id="liveEventsTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Events Table -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-table me-1"></i>Event Log — {{ total }} records</span>
+    <span class="text-muted small">Page {{ page }} of {{ total_pages }}</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 small">
+        <thead>
+          <tr>
+            <th>#</th><th>Type</th><th>User</th><th>File</th>
+            <th>Source IP</th><th>Size</th><th>Description</th><th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for e in events %}
+        <tr>
+          <td class="text-muted">{{ e[0] }}</td>
+          <td>
+            <span class="badge rounded-pill-sm
+              {% if e[1]=='upload' %}bg-primary
+              {% elif e[1]=='download' %}bg-warning text-dark
+              {% elif e[1]=='email' %}bg-info
+              {% else %}bg-secondary{% endif %}">
+              {{ e[1] }}
+            </span>
+          </td>
+          <td>{{ e[8] }}</td>
+          <td>{{ e[9] or '—' }}</td>
+          <td class="text-muted">{{ e[2] or '—' }}</td>
+          <td>{% if e[4] %}{{ (e[4]/1024)|round(1) }} KB{% else %}—{% endif %}</td>
+          <td>{{ (e[6] or '')[:50] }}{% if (e[6] or '')|length > 50 %}…{% endif %}</td>
+          <td class="text-muted">{{ e[7].strftime('%d %b %H:%M') if e[7] else '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center py-4 text-muted">No events found</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% if total_pages > 1 %}
+  <div class="card-footer bg-white">
+    <nav>
+      <ul class="pagination pagination-sm mb-0 justify-content-center">
+        {% if page > 1 %}
+        <li class="page-item"><a class="page-link" href="?page={{ page-1 }}&type={{ type_filter }}&date={{ date_filter }}&user={{ user_filter }}">‹</a></li>
+        {% endif %}
+        {% for p in range(1, total_pages+1) %}
+        <li class="page-item {% if p==page %}active{% endif %}">
+          <a class="page-link" href="?page={{ p }}&type={{ type_filter }}&date={{ date_filter }}&user={{ user_filter }}">{{ p }}</a>
+        </li>
+        {% endfor %}
+        {% if page < total_pages %}
+        <li class="page-item"><a class="page-link" href="?page={{ page+1 }}&type={{ type_filter }}&date={{ date_filter }}&user={{ user_filter }}">›</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const typeData = {{ type_breakdown | tojson }};
+const colors = ['#e74c3c','#f39c12','#3498db','#27ae60','#8e44ad','#16a085','#e67e22'];
+new Chart(document.getElementById('typeChart'), {
+  type: 'doughnut',
+  data:{
+    labels: Object.keys(typeData),
+    datasets:[{ data: Object.values(typeData), backgroundColor: colors, borderWidth:0 }]
+  },
+  options:{ plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}, cutout:'55%' }
+});
+
+// Live event feed
+function loadLive(){
+  fetch('/monitor/api/live').then(r=>r.json()).then(rows=>{
+    const tbody = document.getElementById('liveEventsTable');
+    const typeColors = {upload:'bg-primary',download:'bg-warning text-dark',email:'bg-info'};
+    tbody.innerHTML = rows.map(e=>
+      `<tr>
+        <td><span class="badge rounded-pill-sm ${typeColors[e.type]||'bg-secondary'}">${e.type}</span></td>
+        <td>${(e.desc||'').substring(0,50)}</td>
+        <td>${e.user}</td>
+        <td class="text-muted">${e.time.substring(11,16)}</td>
+      </tr>`
+    ).join('');
+  }).catch(()=>{});
+}
+loadLive();
+setInterval(loadLive, 10000);
+</script>
+{% endblock %}

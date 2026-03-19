@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Alert #{{ alert[0] }}{% endblock %}
+{% block breadcrumb %}Alerts / #{{ alert[0] }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h4 fw-bold mb-0">
+      <span class="badge badge-severity-{{ alert[4] }} me-2">{{ alert[4] }}</span>
+      {{ alert[5] }}
+    </h1>
+    <small class="text-muted">Alert #{{ alert[0] }} — Detected by <strong>{{ alert[13] }}</strong> at {{ alert[11].strftime('%d %b %Y %H:%M') if alert[11] else '—' }}</small>
+  </div>
+  <a href="{{ url_for('alerts.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Back
+  </a>
+</div>
+
+<div class="row g-3">
+  <!-- Left: Alert Details -->
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Alert Details</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-3 text-muted small">Alert Type</dt>
+          <dd class="col-sm-9 small"><code>{{ alert[2] }}</code></dd>
+          <dt class="col-sm-3 text-muted small">Severity</dt>
+          <dd class="col-sm-9"><span class="badge badge-severity-{{ alert[4] }}">{{ alert[4] }}</span></dd>
+          <dt class="col-sm-3 text-muted small">Status</dt>
+          <dd class="col-sm-9"><span class="badge badge-status-{{ alert[3] }}">{{ alert[3]|replace('_',' ') }}</span></dd>
+          <dt class="col-sm-3 text-muted small">Risk Score</dt>
+          <dd class="col-sm-9">
+            <div class="d-flex align-items-center gap-2">
+              <div class="risk-bar-wrap flex-grow-1">
+                <div class="risk-bar"
+                     style="width:{{ alert[7] }}%;background:{% if alert[7]>=70 %}#e74c3c{% elif alert[7]>=50 %}#f39c12{% else %}#3498db{% endif %}">
+                </div>
+              </div>
+              <strong>{{ alert[7]|round(1) }}</strong>
+            </div>
+          </dd>
+          <dt class="col-sm-3 text-muted small">Description</dt>
+          <dd class="col-sm-9 small">{{ alert[6] or '—' }}</dd>
+          <dt class="col-sm-3 text-muted small">Assigned To</dt>
+          <dd class="col-sm-9 small">{{ alert[14] }}</dd>
+          <dt class="col-sm-3 text-muted small">Notes</dt>
+          <dd class="col-sm-9 small">{{ alert[12] or '—' }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Triggering Event -->
+    {% if event %}
+    <div class="card mb-3">
+      <div class="card-header fw-semibold"><i class="bi bi-lightning me-1 text-warning"></i>Triggering Event</div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-3 text-muted small">Event ID</dt>
+          <dd class="col-sm-9 small">#{{ event[0] }}</dd>
+          <dt class="col-sm-3 text-muted small">Type</dt>
+          <dd class="col-sm-9"><span class="badge bg-secondary">{{ event[2] }}</span></dd>
+          <dt class="col-sm-3 text-muted small">File</dt>
+          <dd class="col-sm-9 small">{{ event[11] or '—' }}</dd>
+          <dt class="col-sm-3 text-muted small">Source IP</dt>
+          <dd class="col-sm-9 small"><code>{{ event[3] or '—' }}</code></dd>
+          <dt class="col-sm-3 text-muted small">Bytes</dt>
+          <dd class="col-sm-9 small">{{ event[5] or 0 }}</dd>
+          <dt class="col-sm-3 text-muted small">Time</dt>
+          <dd class="col-sm-9 small">{{ event[9].strftime('%d %b %Y %H:%M:%S') if event[9] else '—' }}</dd>
+        </dl>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: User + Actions -->
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header fw-semibold"><i class="bi bi-person me-1"></i>Affected User</div>
+      <div class="card-body text-center">
+        <div class="avatar-sm mx-auto mb-2" style="width:48px;height:48px;font-size:1.2rem">{{ alert[15][0].upper() if alert[15] else '?' }}</div>
+        <div class="fw-bold">{{ alert[15] }}</div>
+        <div class="text-muted small">{{ alert[16] }}</div>
+        <div class="text-muted small">{{ alert[17] or 'No department' }}</div>
+      </div>
+    </div>
+
+    {% if current_user.is_analyst() %}
+    <div class="card">
+      <div class="card-header fw-semibold"><i class="bi bi-pencil me-1"></i>Update Alert</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('alerts.update_status', alert_id=alert[0]) }}">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Status</label>
+            <select name="status" class="form-select form-select-sm">
+              {% for s in ['new','acknowledged','investigating','resolved','false_positive'] %}
+              <option value="{{ s }}" {% if alert[3]==s %}selected{% endif %}>{{ s|replace('_',' ')|title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Assign To</label>
+            <select name="assigned_to" class="form-select form-select-sm">
+              <option value="">Unassigned</option>
+              {% for a in analysts %}
+              <option value="{{ a[0] }}" {% if alert[10]==a[0] %}selected{% endif %}>{{ a[1] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Notes</label>
+            <textarea name="notes" class="form-control form-control-sm" rows="3"
+                      placeholder="Investigation notes…">{{ alert[12] or '' }}</textarea>
+          </div>
+          <button type="submit" class="btn btn-danger btn-sm w-100">Save Changes</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

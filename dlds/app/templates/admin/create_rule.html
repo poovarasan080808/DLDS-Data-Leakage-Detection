@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Create Detection Rule{% endblock %}
+{% block breadcrumb %}Admin / Rules / Create{% endblock %}
+{% block content %}
+<div class="page-header"><h1><i class="bi bi-plus-circle me-2 text-danger"></i>Create Detection Rule</h1></div>
+<div class="card" style="max-width:600px">
+  <div class="card-body">
+    <form method="POST">
+      <div class="mb-3">
+        <label class="form-label fw-semibold small">Rule Name</label>
+        <input type="text" name="rule_name" class="form-control" required placeholder="e.g. Block large uploads">
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small">Rule Type</label>
+          <select name="rule_type" class="form-select">
+            <option value="volume">Volume</option>
+            <option value="keyword">Keyword</option>
+            <option value="destination">Destination</option>
+            <option value="behaviour">Behaviour</option>
+            <option value="filetype">File Type</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small">Severity</label>
+          <select name="severity" class="form-select">
+            <option value="info">Info</option>
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-semibold small">Condition JSON</label>
+        <textarea name="condition_json" class="form-control font-monospace" rows="5"
+                  placeholder='{"field":"file_size","operator":">","value":52428800}'></textarea>
+        <div class="form-text">Define rule conditions as a JSON object.</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-danger">Create Rule</button>
+        <a href="{{ url_for('admin.rules') }}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

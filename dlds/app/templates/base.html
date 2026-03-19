@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}DLDS{% endblock %} — Data Leakage Detection System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dlds.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+{% if current_user.is_authenticated %}
+<!-- ── Sidebar ─────────────────────────────────── -->
+<div class="d-flex" id="wrapper">
+  <nav id="sidebar" class="bg-dark text-white d-flex flex-column p-3">
+    <div class="sidebar-brand mb-4">
+      <i class="bi bi-shield-shaded text-danger fs-4 me-2"></i>
+      <span class="fw-bold fs-6">DLDS</span>
+      <small class="d-block text-secondary" style="font-size:10px;margin-top:-2px;">Data Leakage Detection</small>
+    </div>
+    <ul class="nav nav-pills flex-column mb-auto">
+      <li class="nav-item">
+        <a href="{{ url_for('main.dashboard') }}"
+           class="nav-link text-white {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+          <i class="bi bi-speedometer2 me-2"></i>Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('upload.index') }}"
+           class="nav-link text-white {% if 'upload' in request.endpoint %}active{% endif %}">
+          <i class="bi bi-cloud-upload me-2"></i>File Upload
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('monitor.index') }}"
+           class="nav-link text-white {% if 'monitor' in request.endpoint %}active{% endif %}">
+          <i class="bi bi-activity me-2"></i>Data Monitor
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('alerts.index') }}"
+           class="nav-link text-white {% if 'alerts' in request.endpoint %}active{% endif %}">
+          <i class="bi bi-bell me-2"></i>Alerts
+          <span id="nav-alert-badge" class="badge bg-danger ms-1" style="display:none"></span>
+        </a>
+      </li>
+      {% if current_user.is_analyst() %}
+      <li class="mt-3"><small class="text-secondary text-uppercase" style="font-size:10px;letter-spacing:1px">Admin</small></li>
+      <li>
+        <a href="{{ url_for('admin.users') }}"
+           class="nav-link text-white {% if request.endpoint == 'admin.users' %}active{% endif %}">
+          <i class="bi bi-people me-2"></i>Users
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.rules') }}"
+           class="nav-link text-white {% if 'rules' in request.endpoint %}active{% endif %}">
+          <i class="bi bi-funnel me-2"></i>Detection Rules
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.audit') }}"
+           class="nav-link text-white {% if 'audit' in request.endpoint %}active{% endif %}">
+          <i class="bi bi-journal-text me-2"></i>Audit Log
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.stats') }}"
+           class="nav-link text-white {% if 'stats' in request.endpoint %}active{% endif %}">
+          <i class="bi bi-bar-chart-line me-2"></i>System Stats
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+    <div class="border-top pt-3 mt-3">
+      <div class="d-flex align-items-center mb-2">
+        <div class="avatar-sm me-2">{{ current_user.username[0].upper() }}</div>
+        <div>
+          <div class="text-white fw-semibold" style="font-size:13px">{{ current_user.username }}</div>
+          <span class="badge badge-role-{{ current_user.role }}">{{ current_user.role }}</span>
+        </div>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-secondary w-100">
+        <i class="bi bi-box-arrow-right me-1"></i>Logout
+      </a>
+    </div>
+  </nav>
+
+  <!-- ── Main content ──────────────────────────── -->
+  <div id="page-content" class="flex-grow-1">
+    <nav class="topbar d-flex align-items-center justify-content-between px-4 py-2 bg-white border-bottom">
+      <button class="btn btn-sm btn-light" id="sidebarToggle">
+        <i class="bi bi-list fs-5"></i>
+      </button>
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-muted small">{% block breadcrumb %}{% endblock %}</span>
+        <a href="{{ url_for('alerts.index') }}" class="btn btn-sm btn-outline-danger position-relative">
+          <i class="bi bi-bell"></i>
+          <span id="top-alert-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none"></span>
+        </a>
+      </div>
+    </nav>
+
+    <main class="p-4">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+            {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+{% else %}
+  <main>{% block auth_content %}{% endblock %}</main>
+{% endif %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  // Sidebar toggle
+  document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+    document.getElementById('wrapper').classList.toggle('sidebar-collapsed');
+  });
+  // Live alert badge
+  function refreshBadge() {
+    fetch('/alerts/api/unread').then(r => r.json()).then(d => {
+      const count = d.count;
+      ['nav-alert-badge','top-alert-badge'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = count; el.style.display = count > 0 ? 'inline' : 'none'; }
+      });
+    }).catch(()=>{});
+  }
+  refreshBadge();
+  setInterval(refreshBadge, 15000);
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

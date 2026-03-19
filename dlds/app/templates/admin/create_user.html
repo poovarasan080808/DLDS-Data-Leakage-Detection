@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Create User{% endblock %}
+{% block breadcrumb %}Admin / Users / Create{% endblock %}
+{% block content %}
+<div class="page-header"><h1><i class="bi bi-person-plus me-2 text-danger"></i>Create New User</h1></div>
+<div class="card" style="max-width:540px">
+  <div class="card-body">
+    <form method="POST">
+      <div class="mb-3">
+        <label class="form-label fw-semibold small">Username</label>
+        <input type="text" name="username" class="form-control" required minlength="3">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold small">Email</label>
+        <input type="email" name="email" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold small">Role</label>
+        <select name="role" class="form-select">
+          <option value="user">User</option>
+          <option value="analyst">Analyst</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold small">Department</label>
+        <input type="text" name="department" class="form-control" placeholder="e.g. Engineering">
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-semibold small">Temporary Password</label>
+        <input type="password" name="password" class="form-control" required minlength="8">
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-danger">Create User</button>
+        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

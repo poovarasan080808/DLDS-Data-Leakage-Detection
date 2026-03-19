@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}System Statistics{% endblock %}
+{% block breadcrumb %}Admin / System Stats{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-bar-chart-line me-2 text-danger"></i>System Statistics</h1>
+  <p>Platform-wide analytics and performance metrics</p>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-success">
+      <div class="kpi-label">Active Users</div>
+      <div class="kpi-value">{{ active_users }}</div>
+      <i class="bi bi-people-fill kpi-icon"></i>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-info">
+      <div class="kpi-label">Total Files</div>
+      <div class="kpi-value">{{ total_files }}</div>
+      <i class="bi bi-files kpi-icon"></i>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-warning">
+      <div class="kpi-label">Storage Used</div>
+      <div class="kpi-value">{{ (total_size/1048576)|round(1) }} MB</div>
+      <i class="bi bi-hdd kpi-icon"></i>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-label">Open Alerts</div>
+      <div class="kpi-value">{{ open_alerts }}</div>
+      <i class="bi bi-bell-fill kpi-icon"></i>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-5">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">Alert Severity Distribution</div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="sevChart" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-7">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">Alerts — Last 30 Days</div>
+      <div class="card-body">
+        <canvas id="trendChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header fw-semibold">Top Users by Alert Count</div>
+      <div class="card-body p-0">
+        <table class="table mb-0 small">
+          <thead><tr><th>User</th><th>Alerts</th><th>Bar</th></tr></thead>
+          <tbody>
+          {% set max_cnt = top_users[0][1] if top_users else 1 %}
+          {% for u, cnt in top_users %}
+          <tr>
+            <td class="fw-semibold">{{ u }}</td>
+            <td>{{ cnt }}</td>
+            <td style="width:60%">
+              <div class="risk-bar-wrap">
+                <div class="risk-bar bg-danger" style="width:{{ (cnt/max_cnt*100)|int }}%"></div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const sevData   = {{ sev_dist | tojson }};
+const trendRaw  = {{ alert_trend | tojson }};
+new Chart(document.getElementById('sevChart'),{
+  type:'doughnut',
+  data:{
+    labels:['Critical','High','Medium','Low','Info'],
+    datasets:[{data:[sevData.critical||0,sevData.high||0,sevData.medium||0,sevData.low||0,sevData.info||0],
+    backgroundColor:['#6c1e1e','#e74c3c','#f39c12','#3498db','#95a5a6'],borderWidth:0}]
+  },
+  options:{plugins:{legend:{position:'right',labels:{boxWidth:12,font:{size:11}}}},cutout:'60%'}
+});
+new Chart(document.getElementById('trendChart'),{
+  type:'bar',
+  data:{
+    labels:trendRaw.map(r=>r[0]),
+    datasets:[{label:'Alerts',data:trendRaw.map(r=>r[1]),backgroundColor:'rgba(231,76,60,.7)',borderRadius:4}]
+  },
+  options:{scales:{y:{beginAtZero:true,grid:{color:'#f0f0f0'}},x:{grid:{display:false}}},plugins:{legend:{display:false}}}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Alerts{% endblock %}
+{% block breadcrumb %}Alerts{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start">
+  <div>
+    <h1><i class="bi bi-bell me-2 text-danger"></i>Alert Console</h1>
+    <p>{{ total }} alert(s) — prioritised by severity</p>
+  </div>
+</div>
+
+<!-- Filter bar -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-md-2">
+        <label class="form-label small mb-1">Severity</label>
+        <select name="severity" class="form-select form-select-sm">
+          <option value="">All</option>
+          {% for s in ['critical','high','medium','low','info'] %}
+          <option value="{{ s }}" {% if severity_filter==s %}selected{% endif %}>{{ s|title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small mb-1">Status</label>
+        <select name="status" class="form-select form-select-sm">
+          <option value="">All</option>
+          {% for s in ['new','acknowledged','investigating','resolved','false_positive'] %}
+          <option value="{{ s }}" {% if status_filter==s %}selected{% endif %}>{{ s|replace('_',' ')|title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-sm btn-danger">Filter</button>
+        <a href="{{ url_for('alerts.index') }}" class="btn btn-sm btn-outline-secondary ms-1">Clear</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>#</th><th>Title</th><th>Severity</th><th>Risk</th>
+          <th>Status</th><th>Method</th><th>User</th><th>Assigned</th><th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for a in alerts %}
+      <tr onclick="location.href='{{ url_for('alerts.detail', alert_id=a[0]) }}'" style="cursor:pointer">
+        <td class="text-muted small">{{ a[0] }}</td>
+        <td class="small fw-semibold">{{ a[1][:55] }}{% if a[1]|length > 55 %}…{% endif %}</td>
+        <td><span class="badge badge-severity-{{ a[2] }} rounded-pill-sm">{{ a[2] }}</span></td>
+        <td>
+          <div class="risk-bar-wrap" style="width:80px">
+            <div class="risk-bar"
+                 style="width:{{ a[4] }}%;background:{% if a[4]>=70 %}#e74c3c{% elif a[4]>=50 %}#f39c12{% else %}#3498db{% endif %}">
+            </div>
+          </div>
+          <small class="text-muted">{{ a[4]|round(0)|int }}</small>
+        </td>
+        <td><span class="badge badge-status-{{ a[3] }} rounded-pill-sm">{{ a[3]|replace('_',' ') }}</span></td>
+        <td class="small text-muted">{{ a[5] }}</td>
+        <td class="small">{{ a[7] }}</td>
+        <td class="small text-muted">{{ a[8] }}</td>
+        <td class="small text-muted">{{ a[6].strftime('%d %b %H:%M') if a[6] else '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="text-center py-5 text-muted">
+        <i class="bi bi-check-circle fs-2 d-block mb-2 text-success"></i>No alerts match the current filter
+      </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if total_pages > 1 %}
+  <div class="card-footer bg-white">
+    <nav><ul class="pagination pagination-sm mb-0 justify-content-center">
+      {% for p in range(1, total_pages+1) %}
+      <li class="page-item {% if p==page %}active{% endif %}">
+        <a class="page-link" href="?page={{ p }}&severity={{ severity_filter }}&status={{ status_filter }}">{{ p }}</a>
+      </li>
+      {% endfor %}
+    </ul></nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

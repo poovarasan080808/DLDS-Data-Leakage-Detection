@@ -1,0 +1,132 @@
+/* ============================================================
+   DLDS — Main Stylesheet
+   Data Leakage Detection System
+   ============================================================ */
+
+:root {
+  --dlds-dark:   #1a1d2e;
+  --dlds-accent: #e74c3c;
+  --sidebar-w:   240px;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+body { background: #f0f2f5; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+#wrapper { min-height: 100vh; }
+
+#sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--dlds-dark) !important;
+  position: sticky; top: 0; height: 100vh;
+  overflow-y: auto; flex-shrink: 0;
+  transition: width .25s ease;
+}
+
+.sidebar-brand { border-bottom: 1px solid rgba(255,255,255,.1); padding-bottom: 1rem; }
+
+#sidebar .nav-link { border-radius: 8px; margin-bottom: 2px; font-size: 13.5px; padding: .5rem .75rem; }
+#sidebar .nav-link:hover  { background: rgba(255,255,255,.08); }
+#sidebar .nav-link.active { background: var(--dlds-accent); color: #fff !important; }
+
+#wrapper.sidebar-collapsed #sidebar { width: 60px; }
+#wrapper.sidebar-collapsed .sidebar-brand span,
+#wrapper.sidebar-collapsed .nav-link span,
+#wrapper.sidebar-collapsed .nav-link small,
+#wrapper.sidebar-collapsed .avatar-sm ~ div { display: none !important; }
+
+#page-content { min-width: 0; }
+
+.topbar { min-height: 54px; box-shadow: 0 1px 4px rgba(0,0,0,.06); position: sticky; top: 0; z-index: 100; }
+
+/* ── Cards ──────────────────────────────────────────────── */
+.card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+.card-header { background: transparent; border-bottom: 1px solid rgba(0,0,0,.07); font-weight: 600; }
+
+/* ── KPI Tiles ──────────────────────────────────────────── */
+.kpi-card { border-radius: 14px; padding: 1.25rem 1.5rem; color: #fff; position: relative; overflow: hidden; }
+.kpi-card .kpi-icon { font-size: 2.5rem; opacity: .25; position: absolute; right: 1rem; bottom: .5rem; }
+.kpi-card .kpi-value { font-size: 2.2rem; font-weight: 700; }
+.kpi-card .kpi-label { font-size: 12px; opacity: .85; text-transform: uppercase; letter-spacing: .5px; }
+.kpi-danger  { background: linear-gradient(135deg,#e74c3c,#c0392b); }
+.kpi-warning { background: linear-gradient(135deg,#f39c12,#d68910); }
+.kpi-info    { background: linear-gradient(135deg,#3498db,#2980b9); }
+.kpi-success { background: linear-gradient(135deg,#27ae60,#1e8449); }
+
+/* ── Severity Badges ────────────────────────────────────── */
+.badge-severity-critical { background:#6c1e1e; color:#fff; }
+.badge-severity-high     { background:#e74c3c; color:#fff; }
+.badge-severity-medium   { background:#f39c12; color:#fff; }
+.badge-severity-low      { background:#3498db; color:#fff; }
+.badge-severity-info     { background:#95a5a6; color:#fff; }
+
+/* ── Status Badges ──────────────────────────────────────── */
+.badge-status-new           { background:#e74c3c; color:#fff; }
+.badge-status-acknowledged  { background:#f39c12; color:#fff; }
+.badge-status-investigating { background:#8e44ad; color:#fff; }
+.badge-status-resolved      { background:#27ae60; color:#fff; }
+.badge-status-false_positive{ background:#7f8c8d; color:#fff; }
+
+/* ── Classification Badges ──────────────────────────────── */
+.badge-class-public      { background:#27ae60; color:#fff; }
+.badge-class-internal    { background:#3498db; color:#fff; }
+.badge-class-confidential{ background:#f39c12; color:#fff; }
+.badge-class-restricted  { background:#e74c3c; color:#fff; }
+
+/* ── Role Badges ────────────────────────────────────────── */
+.badge-role-admin   { background:#8e44ad; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; }
+.badge-role-analyst { background:#2980b9; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; }
+.badge-role-user    { background:#7f8c8d; color:#fff; font-size:10px; padding:2px 6px; border-radius:4px; }
+
+/* ── Avatar ─────────────────────────────────────────────── */
+.avatar-sm {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--dlds-accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+
+/* ── Tables ─────────────────────────────────────────────── */
+.table th { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: #6c757d; border-bottom: 2px solid #dee2e6; }
+.table-hover tbody tr:hover { background: #f8f9fa; cursor: pointer; }
+
+/* ── Risk Score Bar ─────────────────────────────────────── */
+.risk-bar-wrap { background:#e9ecef; border-radius:20px; height:8px; overflow:hidden; }
+.risk-bar { height:8px; border-radius:20px; transition: width .5s ease; }
+
+/* ── Upload Drop Zone ───────────────────────────────────── */
+.dropzone {
+  border: 2px dashed #adb5bd; border-radius: 14px;
+  background: #fff; text-align: center; padding: 3rem 1rem;
+  transition: all .2s; cursor: pointer;
+}
+.dropzone:hover, .dropzone.dragover { border-color: var(--dlds-accent); background: #fff5f5; }
+.dropzone i { font-size: 3rem; color: #adb5bd; }
+
+/* ── Auth Pages ─────────────────────────────────────────── */
+.auth-wrapper {
+  min-height: 100vh; display: flex; align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--dlds-dark) 0%, #2c3e50 100%);
+}
+.auth-card { width: 100%; max-width: 440px; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.auth-logo { font-size: 2.5rem; color: var(--dlds-accent); }
+
+/* ── Misc ───────────────────────────────────────────────── */
+.text-danger-soft { color: #e74c3c; }
+.bg-dlds-dark { background: var(--dlds-dark); }
+.rounded-pill-sm { border-radius: 20px; padding: 3px 10px; font-size: 11px; }
+.live-dot { width:8px; height:8px; border-radius:50%; background:#27ae60; display:inline-block; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.page-header { margin-bottom: 1.5rem; }
+.page-header h1 { font-size: 1.6rem; font-weight: 700; color: #2c3e50; margin: 0; }
+.page-header p  { color: #6c757d; margin: 0; font-size: 14px; }
+
+code { background: #f8f9fa; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+
+/* Responsive */
+@media(max-width:768px){
+  #sidebar { display:none; }
+  #page-content { width:100%; }
+}
